@@ -2,9 +2,10 @@ import Foundation
 import SwiftUI
 import Combine
 
-@MainActor
 final class PermissionStore: ObservableObject {
-    @Published var settings = ClaudeSettings(permissions: .init(allow: [], deny: [], ask: [], additionalDirectories: []))
+    @Published var settings: ClaudeSettings = ClaudeSettings(
+        permissions: ClaudeSettings.Permissions(allow: [], deny: [], ask: [], additionalDirectories: [])
+    )
     @Published var snapshots: [Snapshot] = []
     @Published var expiresAt: Date? = nil
     @Published var pendingRestoreSnapshotID: UUID? = nil
@@ -52,7 +53,7 @@ final class PermissionStore: ObservableObject {
     }
 
     func set(_ rule: String, to bucket: Bucket?) {
-        var p = settings.permissions ?? .init()
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
         p.allow?.removeAll(where: { $0 == rule })
         p.deny?.removeAll(where: { $0 == rule })
         p.ask?.removeAll(where: { $0 == rule })
@@ -69,7 +70,7 @@ final class PermissionStore: ObservableObject {
     // MARK: Directories
 
     func addDirectory(_ path: String) {
-        var p = settings.permissions ?? .init()
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
         var dirs = p.additionalDirectories ?? []
         if !dirs.contains(path) { dirs.append(path) }
         p.additionalDirectories = dirs
@@ -78,7 +79,7 @@ final class PermissionStore: ObservableObject {
     }
 
     func removeDirectory(_ path: String) {
-        var p = settings.permissions ?? .init()
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
         p.additionalDirectories?.removeAll(where: { $0 == path })
         settings.permissions = p
         save()
@@ -132,7 +133,7 @@ final class PermissionStore: ObservableObject {
         guard let t = expiresAt else { return }
         let interval = max(1, t.timeIntervalSinceNow)
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
-            Task { @MainActor in self?.fire() }
+            DispatchQueue.main.async { self?.fire() }
         }
     }
 

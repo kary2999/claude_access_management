@@ -4,10 +4,10 @@ struct ClaudeSettings: Codable, Equatable {
     var permissions: Permissions?
 
     struct Permissions: Codable, Equatable {
-        var allow: [String]?
-        var deny: [String]?
-        var ask: [String]?
-        var additionalDirectories: [String]?
+        var allow: [String]? = nil
+        var deny: [String]? = nil
+        var ask: [String]? = nil
+        var additionalDirectories: [String]? = nil
     }
 }
 
