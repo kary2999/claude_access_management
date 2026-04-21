@@ -67,6 +67,48 @@ final class PermissionStore: ObservableObject {
         save()
     }
 
+    // MARK: Bulk / Presets
+
+    /// Replace all three buckets at once, preserving additionalDirectories.
+    func applyBulk(allow: [String], ask: [String], deny: [String]) {
+        takeAutoSnapshotIfNeeded(label: "auto-before-bulk")
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
+        p.allow = allow
+        p.ask = ask
+        p.deny = deny
+        settings.permissions = p
+        save()
+    }
+
+    func clearAllRules() {
+        takeAutoSnapshotIfNeeded(label: "auto-before-clear")
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
+        p.allow = []
+        p.ask = []
+        p.deny = []
+        settings.permissions = p
+        save()
+    }
+
+    func restoreLatestSnapshot() {
+        guard let latest = snapshots.first else {
+            errorMessage = "还没有任何快照，先去「快照」页保存一个。"
+            return
+        }
+        restore(latest)
+    }
+
+    private var autoSnapshotThrottleUntil: Date = .distantPast
+    /// Keep a safety net snapshot before every destructive bulk op, but at most once per 60s.
+    private func takeAutoSnapshotIfNeeded(label: String) {
+        guard Date() > autoSnapshotThrottleUntil else { return }
+        autoSnapshotThrottleUntil = Date().addingTimeInterval(60)
+        do {
+            _ = try SettingsManager.shared.saveSnapshot(label: label)
+            snapshots = SettingsManager.shared.listSnapshots()
+        } catch { /* non-fatal */ }
+    }
+
     // MARK: Directories
 
     func addDirectory(_ path: String) {
