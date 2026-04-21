@@ -42,7 +42,7 @@ struct SnapshotView: View {
                     }
                     if let t = store.expiresAt {
                         HStack {
-                            Image(systemName: "clock.badge.exclamationmark").foregroundColor(.orange)
+                            Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
                             Text("将于 \(t.formatted(date: .abbreviated, time: .standard)) 自动恢复")
                             Spacer()
                             Button("取消") { store.cancelExpiration() }
