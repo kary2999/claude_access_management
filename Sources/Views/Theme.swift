@@ -60,8 +60,8 @@ struct Chip: View {
                     .fill(active ? color.opacity(0.22) : Color.secondary.opacity(0.08))
             )
             .foregroundColor(active ? color : .secondary)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contentShape(Rectangle())
     }
 }

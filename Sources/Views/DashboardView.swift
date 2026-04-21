@@ -2,6 +2,14 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var store: PermissionStore
+    @State private var toast: String? = nil
+
+    private func flash(_ msg: String) {
+        toast = msg
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            if toast == msg { toast = nil }
+        }
+    }
 
     private var perms: ClaudeSettings.Permissions {
         store.settings.permissions ?? ClaudeSettings.Permissions()
@@ -22,6 +30,13 @@ struct DashboardView: View {
     }
 
     var body: some View {
+        ZStack(alignment: .top) {
+            scrollContent
+            if let msg = toast { toastView(msg) }
+        }
+    }
+
+    private var scrollContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 SectionHeader(title: "当前权限概览",
@@ -71,6 +86,25 @@ struct DashboardView: View {
         }
     }
 
+    private func toastView(_ msg: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+            Text(msg).font(.callout.bold())
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Theme.cardBG)
+                .shadow(color: .black.opacity(0.2), radius: 6, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.green.opacity(0.4), lineWidth: 1)
+        )
+        .padding(.top, 12)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
     // MARK: parts
 
     private var statsRow: some View {
@@ -117,7 +151,10 @@ struct DashboardView: View {
         let cols = [GridItem(.adaptive(minimum: 220), spacing: 10)]
         return LazyVGrid(columns: cols, spacing: 10) {
             ForEach(PresetCatalog.all) { p in
-                Button { p.apply(store) } label: {
+                Button {
+                    p.apply(store)
+                    flash("已应用「\(p.title)」")
+                } label: {
                     HStack(alignment: .top, spacing: 10) {
                         Text(p.emoji).font(.title2)
                         VStack(alignment: .leading, spacing: 2) {
@@ -125,7 +162,7 @@ struct DashboardView: View {
                             Text(p.summary).font(.caption).foregroundColor(.secondary)
                                 .lineLimit(2).multilineTextAlignment(.leading)
                         }
-                        Spacer()
+                        Spacer(minLength: 0)
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -137,6 +174,7 @@ struct DashboardView: View {
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                             .stroke(Theme.subtleBorder, lineWidth: 1)
                     )
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -144,17 +182,25 @@ struct DashboardView: View {
     }
 
     private func actionButton(icon: String, label: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            action()
+            flash(label + " 已执行")
+        } label: {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                Text(label)
+                Text(label).fontWeight(.medium)
             }
-            .padding(.horizontal, 14).padding(.vertical, 8)
+            .padding(.horizontal, 14).padding(.vertical, 9)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(tint.opacity(0.15))
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .stroke(tint.opacity(0.5), lineWidth: 1)
+            )
             .foregroundColor(tint)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

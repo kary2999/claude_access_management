@@ -108,6 +108,7 @@ struct PermissionListView: View {
                         .fill(active ? tint.opacity(0.25) : Color.secondary.opacity(0.08))
                 )
                 .foregroundColor(active ? tint : .secondary)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
