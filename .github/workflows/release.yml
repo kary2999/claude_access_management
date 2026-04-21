@@ -16,12 +16,16 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app
+      - name: Select newest Xcode
+        run: |
+          LATEST=$(ls -d /Applications/Xcode_*.app /Applications/Xcode.app 2>/dev/null \
+            | grep -v Beta | sort -V | tail -1)
+          echo "Using: $LATEST"
+          sudo xcode-select -s "$LATEST"
 
       - name: Show tool versions
         run: |
@@ -32,7 +36,14 @@ jobs:
         run: brew install xcodegen
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          xcodegen generate
+          echo "=== project tree ==="
+          ls -la ClaudeAccessManagement.xcodeproj/
+          echo "=== project.pbxproj head ==="
+          head -20 ClaudeAccessManagement.xcodeproj/project.pbxproj
+          echo "=== xcodebuild -list ==="
+          xcodebuild -list -project ClaudeAccessManagement.xcodeproj || echo "LIST_FAILED"
 
       - name: Resolve version
         id: ver
