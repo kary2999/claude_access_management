@@ -105,6 +105,15 @@ jobs:
           echo "Found: $APP"
           lipo -info "$APP/Contents/MacOS/ClaudeAccessManagement"
 
+      - name: Install app icon into bundle
+        run: |
+          APP="${{ steps.locate.outputs.app }}"
+          mkdir -p "$APP/Contents/Resources"
+          cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+          ls -l "$APP/Contents/Resources/"
+          # Refresh Icon Services cache so Finder picks up new icon
+          touch "$APP"
+
       - name: Ad-hoc sign
         run: codesign --force --deep --sign - "${{ steps.locate.outputs.app }}"
 
