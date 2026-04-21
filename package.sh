@@ -18,7 +18,7 @@ SOURCES=$(find Sources -name "*.swift" | sort)
 compile_arch() {
   local arch="$1" out="$2"
   # shellcheck disable=SC2086
-  swiftc -O -target "${arch}-apple-macos13.0" -sdk "$SDK" \
+  swiftc -Onone -target "${arch}-apple-macos13.0" -sdk "$SDK" \
     -parse-as-library \
     -module-name "$APP_NAME" \
     -o "$out" \

@@ -1,0 +1,96 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g. v1.0.0). For dispatch runs only."
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            V="${GITHUB_REF_NAME}"
+          else
+            V="${{ github.event.inputs.version }}"
+          fi
+          echo "version=${V}" >> "$GITHUB_OUTPUT"
+          echo "short=${V#v}"  >> "$GITHUB_OUTPUT"
+
+      - name: Build (Release, universal)
+        run: |
+          xcodebuild \
+            -project ClaudeAccessManagement.xcodeproj \
+            -scheme ClaudeAccessManagement \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION="${{ steps.ver.outputs.short }}" \
+            clean build
+
+      - name: Locate .app
+        id: locate
+        run: |
+          APP=$(find build/Build/Products/Release -maxdepth 2 -type d -name "ClaudeAccessManagement.app" | head -1)
+          echo "app=$APP" >> "$GITHUB_OUTPUT"
+          echo "Found: $APP"
+          lipo -info "$APP/Contents/MacOS/ClaudeAccessManagement"
+
+      - name: Ad-hoc sign
+        run: codesign --force --deep --sign - "${{ steps.locate.outputs.app }}"
+
+      - name: Zip
+        run: |
+          mkdir -p dist
+          cp -R "${{ steps.locate.outputs.app }}" dist/
+          cd dist
+          ditto -c -k --sequesterRsrc --keepParent ClaudeAccessManagement.app \
+            "ClaudeAccessManagement-${{ steps.ver.outputs.version }}-universal.zip"
+          shasum -a 256 *.zip > SHA256SUMS.txt
+          ls -lh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClaudeAccessManagement-${{ steps.ver.outputs.version }}
+          path: dist/*
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/ClaudeAccessManagement-${{ steps.ver.outputs.version }}-universal.zip
+            dist/SHA256SUMS.txt
