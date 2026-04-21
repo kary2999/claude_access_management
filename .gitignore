@@ -1,0 +1,28 @@
+## Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+## XcodeGen output (regenerate via build.sh)
+ClaudeAccessManagement.xcodeproj/
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Swift PM
+.build/
+.swiftpm/
+Package.resolved
+
+## IDE
+.idea/
+.vscode/
+
+## Claude local (per-user)
+.claude/settings.local.json

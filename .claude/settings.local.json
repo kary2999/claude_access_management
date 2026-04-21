@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodegen --version)",
+      "Bash(brew list *)",
+      "Bash(chmod +x /Users/admin/Desktop/work/Code/Tool/ClaudeAccessManagement/build.sh)",
+      "Bash(brew install *)",
+      "Bash(xcodegen generate *)",
+      "Bash(xcodebuild -project ClaudeAccessManagement.xcodeproj -scheme ClaudeAccessManagement -configuration Release -destination 'platform=macOS' ARCHS=\"arm64 x86_64\" ONLY_ACTIVE_ARCH=NO build)",
+      "Bash(ssh-keyscan -t ed25519 github.com)",
+      "Bash(ssh-keygen -lf -)",
+      "Bash(ssh -T git@github.com -o StrictHostKeyChecking=accept-new)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
