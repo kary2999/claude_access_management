@@ -336,14 +336,23 @@ struct DashboardView: View {
                     Spacer()
                 }
 
-                Text("Claude Desktop 用的是**它自己的 UI 权限开关**，优先级高于 `~/.claude/settings.json`。你在这个 app 里点 YOLO 只对 Terminal 里 `claude` 命令直接启动的会话有效，对 Desktop 里开的会话**无效**。要在 Desktop 里开 YOLO，按下面三步：")
+                Text("Claude Desktop 用它自己的 UI 权限开关，优先级高于 `~/.claude/settings.json`。在这个 app 里点 YOLO 只对 Terminal 里 `claude` 命令直接启动的会话有效，对 Desktop 启动的会话无效。要在 Desktop 里开 YOLO：")
                     .font(.caption).foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    stepRow(1, "Settings → Claude Code", detail: "Claude Desktop 菜单栏 → Settings → 侧边栏选 Claude Code")
-                    stepRow(2, "打开 \"Allow bypass permissions mode\"", detail: "打开这个总开关后，下拉菜单里才会出现 Bypass permissions 选项")
-                    stepRow(3, "发送按钮旁的模式选择器 → 选 \"Bypass permissions\"", detail: "改完后的所有新会话直接 YOLO，不再被询问")
+                    stepRow(1,
+                            "Cmd + , 打开 Settings",
+                            detail: "或 Claude 菜单 → Settings。下面那个按钮会帮你直接拉起。")
+                    stepRow(2,
+                            "左侧选 \"Claude Code\"",
+                            detail: "Personal Settings 路径 /settings/claude-code（不是 Admin 路径）")
+                    stepRow(3,
+                            "启用 bypass permissions 相关开关",
+                            detail: "Pro/Team 账户才能看到这个开关。Admin 可能把它关闭，那种情况是组织策略，app 改不了。")
+                    stepRow(4,
+                            "回聊天框，点输入框附近的模式选择器 → 选 \"Bypass permissions\"",
+                            detail: "如果这个选项是灰的，hover 会提示 \"Enable in Claude Code settings\"，点一下会跳转回上一步 Settings 页。")
                 }
 
                 HStack(spacing: 10) {
