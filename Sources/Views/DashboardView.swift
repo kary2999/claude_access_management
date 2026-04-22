@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct DashboardView: View {
     @EnvironmentObject var store: PermissionStore
@@ -79,12 +80,144 @@ struct DashboardView: View {
                     }
                 }
 
+                yoloMethodsCard
+
                 if !allow.isEmpty || !ask.isEmpty || !deny.isEmpty {
                     Card { currentRulesDetail }
                 }
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 24)
+        }
+    }
+
+    private var yoloMethodsCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 6) {
+                    Text("🔥").font(.title3)
+                    Text("YOLO 全放行 · 两种方式").font(.headline)
+                    Spacer()
+                }
+                Text("两种方式效果等价：前者持久化到配置、全局生效；后者只对当次 `claude` 启动生效。")
+                    .font(.caption).foregroundColor(.secondary)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12)], spacing: 12) {
+                    yoloMethodSettings
+                    yoloMethodCLI
+                }
+            }
+        }
+    }
+
+    private var yoloMethodSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "doc.text.fill").foregroundColor(.accentColor)
+                Text("方式 1：写入 settings.json").font(.callout.bold())
+                Spacer(minLength: 0)
+                if store.currentMode == .bypassPermissions {
+                    Text("生效中").font(.caption.bold())
+                        .padding(.horizontal, 8).padding(.vertical, 2)
+                        .background(Capsule().fill(Color.green.opacity(0.2)))
+                        .foregroundColor(.green)
+                }
+            }
+            codeBlock(#"{ "permissions": { "defaultMode": "bypassPermissions" } }"#)
+            HStack(spacing: 8) {
+                Button {
+                    store.setMode(.bypassPermissions)
+                    flash("已写入 defaultMode=bypassPermissions")
+                } label: {
+                    Label("一键写入", systemImage: "square.and.pencil")
+                }
+                .buttonStyle(.borderedProminent)
+                Button {
+                    store.setMode(.default)
+                    flash("已关闭 YOLO")
+                } label: {
+                    Label("关闭", systemImage: "xmark")
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.currentMode != .bypassPermissions)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.secondary.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Theme.subtleBorder, lineWidth: 1)
+        )
+    }
+
+    private var yoloMethodCLI: some View {
+        let cmd = "claude --dangerously-skip-permissions"
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "terminal.fill").foregroundColor(.accentColor)
+                Text("方式 2：启动时加 CLI flag").font(.callout.bold())
+                Spacer(minLength: 0)
+            }
+            codeBlock(cmd)
+            HStack(spacing: 8) {
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(cmd, forType: .string)
+                    flash("已复制命令到剪贴板")
+                } label: {
+                    Label("复制", systemImage: "doc.on.doc")
+                }
+                .buttonStyle(.borderedProminent)
+                Button {
+                    launchInTerminal(cmd)
+                } label: {
+                    Label("打开终端运行", systemImage: "arrow.up.right.square")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.secondary.opacity(0.06))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Theme.subtleBorder, lineWidth: 1)
+        )
+    }
+
+    private func codeBlock(_ s: String) -> some View {
+        Text(s)
+            .font(.system(.caption, design: .monospaced))
+            .textSelection(.enabled)
+            .padding(.horizontal, 10).padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.black.opacity(0.08))
+            )
+    }
+
+    private func launchInTerminal(_ command: String) {
+        let script = """
+        tell application "Terminal"
+            activate
+            do script "\(command)"
+        end tell
+        """
+        guard let appleScript = NSAppleScript(source: script) else { return }
+        var err: NSDictionary?
+        appleScript.executeAndReturnError(&err)
+        if err == nil {
+            flash("已在终端启动")
+        } else {
+            flash("启动失败，请手动复制命令")
         }
     }
 
