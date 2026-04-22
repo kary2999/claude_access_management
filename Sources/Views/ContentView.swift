@@ -23,7 +23,7 @@ struct ContentView: View {
             case .dashboard:   return "权限概览 + 快速操作"
             case .commands:    return "逐条控制 Allow / Ask / Deny"
             case .directories: return "Claude 可访问的目录白名单"
-            case .snapshots:   return "保存 / 恢复 / 定时自动恢复"
+            case .snapshots:   return "保存 / 恢复授权配置"
             }
         }
     }

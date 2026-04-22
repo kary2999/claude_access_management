@@ -3,14 +3,12 @@ import SwiftUI
 struct SnapshotView: View {
     @EnvironmentObject var store: PermissionStore
     @State private var label: String = ""
-    @State private var minutes: Int = 30
-    @State private var selectedSnapID: UUID? = nil
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "快照与定时",
-                              subtitle: "保存当前授权配置，或让它过期自动回滚")
+                SectionHeader(title: "快照管理",
+                              subtitle: "保存当前授权配置，随时可恢复。定时恢复入口在「概览」页。")
 
                 Card {
                     VStack(alignment: .leading, spacing: 10) {
@@ -26,47 +24,6 @@ struct SnapshotView: View {
                                 Label("保存", systemImage: "square.and.arrow.down")
                             }
                             .buttonStyle(.borderedProminent)
-                        }
-                    }
-                }
-
-                Card {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("定时授权").font(.headline)
-                        Text("到期后自动恢复到指定快照，避免授权长期泄露。")
-                            .font(.caption).foregroundColor(.secondary)
-                        HStack {
-                            Stepper("有效时间：\(minutes) 分钟", value: $minutes, in: 1...1440, step: 5)
-                            Spacer()
-                        }
-                        HStack(spacing: 10) {
-                            Picker("到期恢复到", selection: $selectedSnapID) {
-                                Text("选择快照…").tag(UUID?.none)
-                                ForEach(store.snapshots) { s in
-                                    Text("\(s.label) · \(s.createdAt.formatted(date: .abbreviated, time: .shortened))")
-                                        .tag(Optional(s.id))
-                                }
-                            }
-                            Button {
-                                if let id = selectedSnapID {
-                                    store.startExpiration(minutes: minutes, restoreTo: id)
-                                }
-                            } label: { Label("启动计时", systemImage: "play.fill") }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(selectedSnapID == nil)
-                        }
-                        if let t = store.expiresAt {
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
-                                Text("将于 \(t.formatted(date: .abbreviated, time: .standard)) 自动恢复")
-                                    .font(.callout)
-                                Spacer()
-                                Button("取消") { store.cancelExpiration() }
-                            }
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.12))
-                            )
                         }
                     }
                 }
@@ -110,8 +67,8 @@ struct SnapshotView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 24)
+            .padding(.horizontal, 38)
+            .padding(.vertical, 28)
         }
     }
 }

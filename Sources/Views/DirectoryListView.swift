@@ -62,8 +62,8 @@ struct DirectoryListView: View {
             }
             Spacer()
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 24)
+        .padding(.horizontal, 38)
+        .padding(.vertical, 28)
     }
 
     private func pickDirectory() {

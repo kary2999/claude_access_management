@@ -4,6 +4,8 @@ import AppKit
 struct DashboardView: View {
     @EnvironmentObject var store: PermissionStore
     @State private var toast: String? = nil
+    @State private var timerMinutes: Int = 30
+    @State private var timerTargetSnapID: UUID? = nil
 
     private func flash(_ msg: String) {
         toast = msg
@@ -46,10 +48,6 @@ struct DashboardView: View {
                 statsRow
                 modeCard
 
-                if store.expiresAt != nil {
-                    Card { timerBanner }
-                }
-
                 Card {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
@@ -61,33 +59,29 @@ struct DashboardView: View {
                     }
                 }
 
+                yoloMethodsCard
+                timerCard
+
                 Card {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("一键操作").font(.headline)
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 10)], spacing: 10) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 10)], spacing: 10) {
                             actionButton(icon: "arrow.uturn.backward",
                                          label: "恢复最近快照",
                                          tint: .blue) { store.restoreLatestSnapshot() }
-                            actionButton(icon: "flame.fill",
-                                         label: "YOLO 全放行",
-                                         tint: .orange) {
-                                PresetCatalog.all.first { $0.id == "bypass_all" }?.apply(store)
-                            }
                             actionButton(icon: "xmark.octagon",
-                                         label: "清空所有",
+                                         label: "清空所有规则",
                                          tint: .red) { store.clearAllRules() }
                         }
                     }
                 }
 
-                yoloMethodsCard
-
                 if !allow.isEmpty || !ask.isEmpty || !deny.isEmpty {
                     Card { currentRulesDetail }
                 }
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 24)
+            .padding(.horizontal, 38)
+            .padding(.vertical, 28)
         }
     }
 
@@ -316,19 +310,65 @@ struct DashboardView: View {
         }
     }
 
-    private var timerBanner: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "timer").foregroundColor(.orange).font(.title2)
-            VStack(alignment: .leading) {
-                Text("定时授权生效中").font(.headline)
+    private var timerCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("定时授权").font(.headline)
+                    Spacer()
+                    if store.expiresAt != nil {
+                        Text("生效中").font(.caption.bold())
+                            .padding(.horizontal, 8).padding(.vertical, 2)
+                            .background(Capsule().fill(Color.orange.opacity(0.2)))
+                            .foregroundColor(.orange)
+                    }
+                }
+                Text("到期后自动恢复到指定快照，避免长期授权泄露。")
+                    .font(.caption).foregroundColor(.secondary)
+
                 if let t = store.expiresAt {
-                    Text("将于 \(t.formatted(date: .abbreviated, time: .standard)) 自动恢复快照")
-                        .font(.caption).foregroundColor(.secondary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "timer").foregroundColor(.orange)
+                        Text("将于 \(t.formatted(date: .abbreviated, time: .standard)) 自动恢复")
+                            .font(.callout)
+                        Spacer()
+                        Button("取消") {
+                            store.cancelExpiration()
+                            flash("定时已取消")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.1)))
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Stepper("有效时间：\(timerMinutes) 分钟",
+                                    value: $timerMinutes, in: 1...1440, step: 5)
+                            Spacer()
+                        }
+                        HStack(spacing: 10) {
+                            Picker("到期恢复到", selection: $timerTargetSnapID) {
+                                Text(store.snapshots.isEmpty ? "先去「快照」页保存一个" : "选择快照…")
+                                    .tag(UUID?.none)
+                                ForEach(store.snapshots) { s in
+                                    Text("\(s.label) · \(s.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                                        .tag(Optional(s.id))
+                                }
+                            }
+                            .disabled(store.snapshots.isEmpty)
+                            Button {
+                                if let id = timerTargetSnapID {
+                                    store.startExpiration(minutes: timerMinutes, restoreTo: id)
+                                    flash("已启动 \(timerMinutes) 分钟定时")
+                                }
+                            } label: { Label("启动计时", systemImage: "play.fill") }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(timerTargetSnapID == nil)
+                        }
+                    }
                 }
             }
-            Spacer()
-            Button("取消") { store.cancelExpiration() }
-                .buttonStyle(.bordered)
         }
     }
 
