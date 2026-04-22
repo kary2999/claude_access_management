@@ -83,6 +83,9 @@ struct DashboardView: View {
                 }
 
                 yoloMethodsCard
+                if ClaudeDesktop.isInstalled {
+                    claudeDesktopGuideCard
+                }
                 timerCard
 
                 Card {
@@ -308,6 +311,73 @@ struct DashboardView: View {
                             .font(.caption).foregroundColor(.secondary)
                     }
                 }
+            }
+        }
+    }
+
+    /// Instructional card shown only when Claude Desktop is installed.
+    /// Explains that settings.json alone is not enough — Desktop has its
+    /// own UI mode selector that takes precedence.
+    private var claudeDesktopGuideCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.bubble.fill")
+                        .foregroundColor(.blue).font(.title3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("检测到你装了 Claude Desktop").font(.headline)
+                        if let v = ClaudeDesktop.version {
+                            Text("\(ClaudeDesktop.installedPath ?? "") · v\(v)"
+                                 + (ClaudeDesktop.isRunning ? " · 运行中" : ""))
+                                .font(.caption2).foregroundColor(.secondary)
+                                .lineLimit(1).truncationMode(.middle)
+                        }
+                    }
+                    Spacer()
+                }
+
+                Text("Claude Desktop 用的是**它自己的 UI 权限开关**，优先级高于 `~/.claude/settings.json`。你在这个 app 里点 YOLO 只对 Terminal 里 `claude` 命令直接启动的会话有效，对 Desktop 里开的会话**无效**。要在 Desktop 里开 YOLO，按下面三步：")
+                    .font(.caption).foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    stepRow(1, "Settings → Claude Code", detail: "Claude Desktop 菜单栏 → Settings → 侧边栏选 Claude Code")
+                    stepRow(2, "打开 \"Allow bypass permissions mode\"", detail: "打开这个总开关后，下拉菜单里才会出现 Bypass permissions 选项")
+                    stepRow(3, "发送按钮旁的模式选择器 → 选 \"Bypass permissions\"", detail: "改完后的所有新会话直接 YOLO，不再被询问")
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        ClaudeDesktop.activateAndOpenSettings()
+                        flash("已呼出 Claude Desktop 设置")
+                    } label: {
+                        Label("打开 Claude Desktop 设置", systemImage: "gearshape")
+                            .font(.body.bold())
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+
+                    Button {
+                        ClaudeDesktop.revealInFinder()
+                    } label: {
+                        Label("在 Finder 中显示", systemImage: "arrow.up.forward.app")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+
+    private func stepRow(_ n: Int, _ title: String, detail: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            ZStack {
+                Circle().fill(Color.blue.opacity(0.15)).frame(width: 22, height: 22)
+                Text("\(n)").font(.caption.bold()).foregroundColor(.blue)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.callout.bold())
+                Text(detail).font(.caption).foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
