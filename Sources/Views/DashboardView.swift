@@ -338,7 +338,7 @@ struct DashboardView: View {
                             : "没有检测到 claude 进程")
             } label: {
                 Label("立即终止并让其重读配置", systemImage: "bolt.circle.fill")
-                    .fontWeight(.semibold)
+                    .font(.body.bold())
             }
             .buttonStyle(.borderedProminent)
             .tint(.orange)
@@ -503,7 +503,7 @@ struct DashboardView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                Text(label).fontWeight(.medium)
+                Text(label).font(.body.weight(.medium))
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 14).padding(.vertical, 9)
