@@ -80,8 +80,8 @@ struct DashboardView: View {
                     Card { currentRulesDetail }
                 }
             }
-            .padding(.horizontal, 38)
-            .padding(.vertical, 28)
+            .padding(.horizontal, 48)
+            .padding(.vertical, 32)
         }
     }
 
@@ -95,6 +95,24 @@ struct DashboardView: View {
                 }
                 Text("两种方式效果等价：前者持久化到配置、全局生效；后者只对当次 `claude` 启动生效。")
                     .font(.caption).foregroundColor(.secondary)
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("改配置后必须重启 Claude 会话才生效").font(.callout.bold())
+                        Text("当前正在运行的 `claude` 进程是在启动时读的配置，settings.json 不会热加载。想立刻生效就用方式 2。")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.12))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8).stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12)], spacing: 12) {
                     yoloMethodSettings

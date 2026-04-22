@@ -22,7 +22,7 @@ struct PermissionListView: View {
                         ruleRow(row)
                     }
                 }
-                .padding(.horizontal, 38)
+                .padding(.horizontal, 48)
                 .padding(.vertical, 20)
             }
         }
@@ -51,7 +51,7 @@ struct PermissionListView: View {
             Spacer()
             Text("\(rows.count) 条").font(.caption).foregroundColor(.secondary)
         }
-        .padding(.horizontal, 38)
+        .padding(.horizontal, 48)
         .padding(.vertical, 14)
     }
 

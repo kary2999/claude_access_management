@@ -12,9 +12,11 @@ struct Card<Content: View>: View {
     var body: some View {
         content()
             .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Theme.cardBG)
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)

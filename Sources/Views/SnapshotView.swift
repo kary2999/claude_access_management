@@ -67,8 +67,8 @@ struct SnapshotView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 38)
-            .padding(.vertical, 28)
+            .padding(.horizontal, 48)
+            .padding(.vertical, 32)
         }
     }
 }
