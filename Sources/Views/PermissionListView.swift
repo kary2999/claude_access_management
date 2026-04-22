@@ -21,7 +21,9 @@ struct PermissionListView: View {
                     ForEach(rows) { row in
                         ruleRow(row)
                     }
-                }.padding(14)
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
             }
         }
     }
@@ -49,7 +51,8 @@ struct PermissionListView: View {
             Spacer()
             Text("\(rows.count) 条").font(.caption).foregroundColor(.secondary)
         }
-        .padding(14)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 14)
     }
 
     private func ruleRow(_ row: CommandEntry) -> some View {

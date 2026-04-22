@@ -51,8 +51,8 @@ enum PresetCatalog {
         },
         Preset(
             id: "allow_all",
-            title: "全量放行",
-            summary: "所有内置指令直接 allow（含 L5 破坏性）。⚠️ 自担风险。",
+            title: "全量放行（清单）",
+            summary: "把目录里 102 条指令全部 allow。⚠️ 未在清单里的仍要询问。",
             emoji: "⚡"
         ) { store in
             store.applyBulk(
@@ -61,15 +61,25 @@ enum PresetCatalog {
             )
         },
         Preset(
+            id: "bypass_all",
+            title: "全量配置（YOLO）",
+            summary: "用 Claude 原生 defaultMode=bypassPermissions，一条替代所有规则，跳过所有权限询问。⚠️ 极度危险。",
+            emoji: "🔥"
+        ) { store in
+            store.applyBulk(allow: [], ask: [], deny: [])
+            store.setMode(.bypassPermissions)
+        },
+        Preset(
             id: "lockdown",
             title: "锁死",
-            summary: "所有内置指令 deny。每次都会被询问（实际上拒绝）。",
+            summary: "所有内置指令 deny，并把 defaultMode 恢复为默认询问。",
             emoji: "🔒"
         ) { store in
             store.applyBulk(
                 allow: [], ask: [],
                 deny: CommandCatalog.all.map { $0.rule }
             )
+            store.setMode(.default)
         }
     ]
 }

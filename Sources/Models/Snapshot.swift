@@ -8,6 +8,9 @@ struct ClaudeSettings: Codable, Equatable {
         var deny: [String]? = nil
         var ask: [String]? = nil
         var additionalDirectories: [String]? = nil
+        /// Claude Code's top-level switch.
+        /// "default" | "acceptEdits" | "plan" | "bypassPermissions"
+        var defaultMode: String? = nil
     }
 }
 

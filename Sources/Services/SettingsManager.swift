@@ -42,7 +42,8 @@ final class SettingsManager {
             allow: perms["allow"] as? [String] ?? [],
             deny: perms["deny"] as? [String] ?? [],
             ask: perms["ask"] as? [String] ?? [],
-            additionalDirectories: perms["additionalDirectories"] as? [String] ?? []
+            additionalDirectories: perms["additionalDirectories"] as? [String] ?? [],
+            defaultMode: perms["defaultMode"] as? String
         ))
         _ = root
         return parsed
@@ -64,6 +65,11 @@ final class SettingsManager {
         perms["deny"] = settings.permissions?.deny ?? []
         perms["ask"] = settings.permissions?.ask ?? []
         perms["additionalDirectories"] = settings.permissions?.additionalDirectories ?? []
+        if let mode = settings.permissions?.defaultMode, !mode.isEmpty {
+            perms["defaultMode"] = mode
+        } else {
+            perms.removeValue(forKey: "defaultMode")
+        }
         root["permissions"] = perms
 
         let data = try JSONSerialization.data(withJSONObject: root,

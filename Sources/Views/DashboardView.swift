@@ -38,11 +38,12 @@ struct DashboardView: View {
 
     private var scrollContent: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 SectionHeader(title: "当前权限概览",
                               subtitle: "实时读取 ~/.claude/settings.json")
 
                 statsRow
+                modeCard
 
                 if store.expiresAt != nil {
                     Card { timerBanner }
@@ -66,10 +67,10 @@ struct DashboardView: View {
                             actionButton(icon: "arrow.uturn.backward",
                                          label: "恢复最近快照",
                                          tint: .blue) { store.restoreLatestSnapshot() }
-                            actionButton(icon: "bolt.fill",
-                                         label: "全量允许",
+                            actionButton(icon: "flame.fill",
+                                         label: "YOLO 全放行",
                                          tint: .orange) {
-                                PresetCatalog.all.first { $0.id == "allow_all" }?.apply(store)
+                                PresetCatalog.all.first { $0.id == "bypass_all" }?.apply(store)
                             }
                             actionButton(icon: "xmark.octagon",
                                          label: "清空所有",
@@ -82,7 +83,56 @@ struct DashboardView: View {
                     Card { currentRulesDetail }
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 24)
+        }
+    }
+
+    private var modeCard: some View {
+        Card {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("默认授权模式").font(.headline)
+                    Spacer()
+                    Text("permissions.defaultMode")
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundColor(.secondary)
+                }
+                HStack(spacing: 8) {
+                    ForEach(PermissionStore.Mode.allCases) { m in
+                        let active = store.currentMode == m
+                        Button {
+                            store.setMode(m)
+                            flash("默认模式 → \(m.label)")
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(m.emoji)
+                                Text(m.label).font(.caption.bold())
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .fill(active ? Color.accentColor.opacity(0.22) : Color.secondary.opacity(0.08))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                    .stroke(active ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                            )
+                            .foregroundColor(active ? .accentColor : .primary)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Spacer(minLength: 0)
+                }
+                if store.currentMode == .bypassPermissions {
+                    HStack(spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill").foregroundColor(.orange)
+                        Text("全量放行已开启。Claude 会跳过所有权限询问。用完记得切回「默认」。")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                }
+            }
         }
     }
 

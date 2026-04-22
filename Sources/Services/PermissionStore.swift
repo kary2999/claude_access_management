@@ -67,6 +67,46 @@ final class PermissionStore: ObservableObject {
         save()
     }
 
+    // MARK: defaultMode (Claude Code 顶层开关)
+
+    enum Mode: String, CaseIterable, Identifiable {
+        case `default` = "default"
+        case acceptEdits = "acceptEdits"
+        case plan = "plan"
+        case bypassPermissions = "bypassPermissions"
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .`default`:         return "默认（按规则询问）"
+            case .acceptEdits:       return "自动接受文件编辑"
+            case .plan:              return "Plan 模式（只读）"
+            case .bypassPermissions: return "全量放行（YOLO）"
+            }
+        }
+        var emoji: String {
+            switch self {
+            case .`default`:         return "⚖️"
+            case .acceptEdits:       return "✍️"
+            case .plan:              return "🗺️"
+            case .bypassPermissions: return "🔥"
+            }
+        }
+    }
+
+    var currentMode: Mode {
+        guard let raw = settings.permissions?.defaultMode,
+              let m = Mode(rawValue: raw) else { return .default }
+        return m
+    }
+
+    func setMode(_ mode: Mode) {
+        takeAutoSnapshotIfNeeded(label: "auto-before-mode-change")
+        var p = settings.permissions ?? ClaudeSettings.Permissions()
+        p.defaultMode = (mode == .default) ? nil : mode.rawValue
+        settings.permissions = p
+        save()
+    }
+
     // MARK: Bulk / Presets
 
     /// Replace all three buckets at once, preserving additionalDirectories.
