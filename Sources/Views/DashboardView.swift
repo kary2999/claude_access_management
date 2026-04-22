@@ -62,6 +62,8 @@ struct DashboardView: View {
                 SectionHeader(title: "当前权限概览",
                               subtitle: "实时读取 ~/.claude/settings.json")
 
+                claudeStatusStrip
+
                 if store.configDirtyThisSession && !runningClaudes.isEmpty {
                     restartBanner
                 }
@@ -85,28 +87,11 @@ struct DashboardView: View {
 
                 Card {
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("一键操作").font(.headline)
-                            Spacer()
-                            if !runningClaudes.isEmpty {
-                                Text("\(runningClaudes.count) 个 claude 运行中")
-                                    .font(.caption)
-                                    .padding(.horizontal, 8).padding(.vertical, 2)
-                                    .background(Capsule().fill(Color.orange.opacity(0.2)))
-                                    .foregroundColor(.orange)
-                            }
-                        }
+                        Text("一键操作").font(.headline)
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 10)], spacing: 10) {
                             actionButton(icon: "arrow.uturn.backward",
                                          label: "恢复最近快照",
                                          tint: .blue) { store.restoreLatestSnapshot() }
-                            actionButton(icon: "arrow.triangle.2.circlepath",
-                                         label: "重启 Claude CLI",
-                                         tint: .orange) {
-                                let n = store.restartClaudeCLI()
-                                refreshClaudes()
-                                flash(n > 0 ? "已终止 \(n) 个 claude 进程" : "没有运行中的 claude")
-                            }
                             actionButton(icon: "xmark.octagon",
                                          label: "清空所有规则",
                                          tint: .red) { store.clearAllRules() }
@@ -118,8 +103,8 @@ struct DashboardView: View {
                     Card { currentRulesDetail }
                 }
             }
-            .padding(.horizontal, 68)
-            .padding(.vertical, 36)
+            .padding(.horizontal, 50)
+            .padding(.vertical, 32)
         }
     }
 
@@ -318,6 +303,58 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    /// Always-visible status strip: shows running claude count and a prominent
+    /// "重启 Claude CLI" button. No matter whether you dirtied config this
+    /// session, you can kill stale claude processes from here.
+    private var claudeStatusStrip: some View {
+        HStack(spacing: 12) {
+            Image(systemName: runningClaudes.isEmpty
+                    ? "moon.zzz.fill"
+                    : "waveform.path.ecg.rectangle.fill")
+                .font(.title2)
+                .foregroundColor(runningClaudes.isEmpty ? .secondary : .green)
+            VStack(alignment: .leading, spacing: 2) {
+                if runningClaudes.isEmpty {
+                    Text("没有 claude CLI 运行中").font(.callout.bold())
+                    Text("下次你启动 `claude`，会直接读取最新 settings.json。")
+                        .font(.caption).foregroundColor(.secondary)
+                } else {
+                    Text("检测到 \(runningClaudes.count) 个 claude CLI 进程在跑")
+                        .font(.callout.bold())
+                    Text("PID: \(runningClaudes.map { String($0.pid) }.joined(separator: ", "))  — 它们加载的还是启动时的配置")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+            }
+            Spacer()
+            Button {
+                let n = store.restartClaudeCLI()
+                refreshClaudes()
+                flash(n > 0 ? "已终止 \(n) 个 claude，下次启动读新配置"
+                            : "没有运行中的 claude")
+            } label: {
+                Label("重启 Claude CLI", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.body.bold())
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(runningClaudes.isEmpty ? .gray : .orange)
+            .disabled(runningClaudes.isEmpty)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(runningClaudes.isEmpty
+                      ? Color.secondary.opacity(0.08)
+                      : Color.orange.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(runningClaudes.isEmpty
+                        ? Color.secondary.opacity(0.2)
+                        : Color.orange.opacity(0.4),
+                        lineWidth: 1)
+        )
     }
 
     private var restartBanner: some View {
