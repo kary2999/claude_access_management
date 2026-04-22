@@ -117,6 +117,10 @@ final class PermissionStore: ObservableObject {
         var p = settings.permissions ?? ClaudeSettings.Permissions()
         p.defaultMode = (mode == .default) ? nil : mode.rawValue
         settings.permissions = p
+        // YOLO needs the root-level flag too, otherwise Claude Code still
+        // prompts once at session start to confirm bypass mode.
+        settings.skipDangerousModePermissionPrompt =
+            (mode == .bypassPermissions) ? true : nil
         save()
     }
 

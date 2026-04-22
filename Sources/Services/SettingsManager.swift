@@ -38,14 +38,14 @@ final class SettingsManager {
             throw SettingsManagerError.decodeFailed("root not object")
         }
         let perms = (root["permissions"] as? [String: Any]) ?? [:]
-        let parsed = ClaudeSettings(permissions: .init(
+        var parsed = ClaudeSettings(permissions: .init(
             allow: perms["allow"] as? [String] ?? [],
             deny: perms["deny"] as? [String] ?? [],
             ask: perms["ask"] as? [String] ?? [],
             additionalDirectories: perms["additionalDirectories"] as? [String] ?? [],
             defaultMode: perms["defaultMode"] as? String
         ))
-        _ = root
+        parsed.skipDangerousModePermissionPrompt = root["skipDangerousModePermissionPrompt"] as? Bool
         return parsed
     }
 
@@ -71,6 +71,13 @@ final class SettingsManager {
             perms.removeValue(forKey: "defaultMode")
         }
         root["permissions"] = perms
+
+        // Top-level flag that suppresses the bypass-mode confirmation.
+        if let skip = settings.skipDangerousModePermissionPrompt {
+            root["skipDangerousModePermissionPrompt"] = skip
+        } else {
+            root.removeValue(forKey: "skipDangerousModePermissionPrompt")
+        }
 
         let data = try JSONSerialization.data(withJSONObject: root,
                                               options: [.prettyPrinted, .sortedKeys])

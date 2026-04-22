@@ -158,7 +158,14 @@ struct DashboardView: View {
                         .foregroundColor(.green)
                 }
             }
-            codeBlock(#"{ "permissions": { "defaultMode": "bypassPermissions" } }"#)
+            codeBlock(#"""
+            {
+              "skipDangerousModePermissionPrompt": true,
+              "permissions": {
+                "defaultMode": "bypassPermissions"
+              }
+            }
+            """#)
             HStack(spacing: 8) {
                 Button {
                     store.setMode(.bypassPermissions)
