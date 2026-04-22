@@ -32,7 +32,7 @@ struct ContentView: View {
         NavigationView {
             sidebar
             detailView
-                .frame(minWidth: 720, minHeight: 560)
+                .frame(minWidth: 760, minHeight: 600)
         }
         .alert(isPresented: Binding(
             get: { store.errorMessage != nil },

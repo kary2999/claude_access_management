@@ -63,7 +63,7 @@ struct DashboardView: View {
                 Card {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("一键操作").font(.headline)
-                        HStack(spacing: 10) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 10)], spacing: 10) {
                             actionButton(icon: "arrow.uturn.backward",
                                          label: "恢复最近快照",
                                          tint: .blue) { store.restoreLatestSnapshot() }
@@ -98,18 +98,20 @@ struct DashboardView: View {
                         .font(.system(.caption2, design: .monospaced))
                         .foregroundColor(.secondary)
                 }
-                HStack(spacing: 8) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 8)], spacing: 8) {
                     ForEach(PermissionStore.Mode.allCases) { m in
                         let active = store.currentMode == m
                         Button {
                             store.setMode(m)
                             flash("默认模式 → \(m.label)")
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 6) {
                                 Text(m.emoji)
                                 Text(m.label).font(.caption.bold())
+                                Spacer(minLength: 0)
                             }
-                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .padding(.horizontal, 10).padding(.vertical, 8)
+                            .frame(maxWidth: .infinity)
                             .background(
                                 RoundedRectangle(cornerRadius: 7, style: .continuous)
                                     .fill(active ? Color.accentColor.opacity(0.22) : Color.secondary.opacity(0.08))
@@ -123,7 +125,6 @@ struct DashboardView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    Spacer(minLength: 0)
                 }
                 if store.currentMode == .bypassPermissions {
                     HStack(spacing: 6) {
@@ -158,7 +159,7 @@ struct DashboardView: View {
     // MARK: parts
 
     private var statsRow: some View {
-        HStack(spacing: 12) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 160), spacing: 12)], spacing: 12) {
             statCard(title: "允许", value: allow.count, color: .green, systemImage: "checkmark.circle.fill")
             statCard(title: "询问", value: ask.count, color: .yellow, systemImage: "questionmark.circle.fill")
             statCard(title: "拒绝", value: deny.count, color: .red, systemImage: "xmark.octagon.fill")
@@ -176,8 +177,9 @@ struct DashboardView: View {
                     Text("\(value)").font(.title.bold())
                     Text(title).font(.caption).foregroundColor(.secondary)
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -239,8 +241,10 @@ struct DashboardView: View {
             HStack(spacing: 6) {
                 Image(systemName: icon)
                 Text(label).fontWeight(.medium)
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 14).padding(.vertical, 9)
+            .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(tint.opacity(0.15))
