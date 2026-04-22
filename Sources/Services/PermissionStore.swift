@@ -10,6 +10,9 @@ final class PermissionStore: ObservableObject {
     @Published var expiresAt: Date? = nil
     @Published var pendingRestoreSnapshotID: UUID? = nil
     @Published var errorMessage: String? = nil
+    /// Set to true after any save() in this session. Lets us show a
+    /// "Claude CLI needs restart to pick up changes" banner.
+    @Published var configDirtyThisSession: Bool = false
 
     private var timer: Timer?
     private let defaults = UserDefaults.standard
@@ -35,9 +38,19 @@ final class PermissionStore: ObservableObject {
     func save() {
         do {
             try SettingsManager.shared.write(settings)
+            configDirtyThisSession = true
         } catch {
             errorMessage = "保存失败: \(error)"
         }
+    }
+
+    /// Kills all running `claude` CLI processes (SIGTERM). Next `claude`
+    /// launch will read the updated settings.json.
+    @discardableResult
+    func restartClaudeCLI() -> Int {
+        let killed = ClaudeProcess.terminateAll()
+        if !killed.isEmpty { configDirtyThisSession = false }
+        return killed.count
     }
 
     // MARK: Allow/Deny/Ask toggles

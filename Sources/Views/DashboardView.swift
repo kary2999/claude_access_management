@@ -6,6 +6,8 @@ struct DashboardView: View {
     @State private var toast: String? = nil
     @State private var timerMinutes: Int = 30
     @State private var timerTargetSnapID: UUID? = nil
+    @State private var runningClaudes: [ClaudeProcess.Info] = []
+    @State private var claudePollTimer: Timer? = nil
 
     private func flash(_ msg: String) {
         toast = msg
@@ -37,6 +39,21 @@ struct DashboardView: View {
             scrollContent
             if let msg = toast { toastView(msg) }
         }
+        .onAppear { refreshClaudes(); startPolling() }
+        .onDisappear { stopPolling() }
+    }
+
+    private func refreshClaudes() {
+        runningClaudes = ClaudeProcess.running()
+    }
+    private func startPolling() {
+        claudePollTimer?.invalidate()
+        claudePollTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+            DispatchQueue.main.async { refreshClaudes() }
+        }
+    }
+    private func stopPolling() {
+        claudePollTimer?.invalidate(); claudePollTimer = nil
     }
 
     private var scrollContent: some View {
@@ -44,6 +61,10 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 18) {
                 SectionHeader(title: "当前权限概览",
                               subtitle: "实时读取 ~/.claude/settings.json")
+
+                if store.configDirtyThisSession && !runningClaudes.isEmpty {
+                    restartBanner
+                }
 
                 statsRow
                 modeCard
@@ -64,11 +85,28 @@ struct DashboardView: View {
 
                 Card {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("一键操作").font(.headline)
+                        HStack {
+                            Text("一键操作").font(.headline)
+                            Spacer()
+                            if !runningClaudes.isEmpty {
+                                Text("\(runningClaudes.count) 个 claude 运行中")
+                                    .font(.caption)
+                                    .padding(.horizontal, 8).padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.orange.opacity(0.2)))
+                                    .foregroundColor(.orange)
+                            }
+                        }
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 10)], spacing: 10) {
                             actionButton(icon: "arrow.uturn.backward",
                                          label: "恢复最近快照",
                                          tint: .blue) { store.restoreLatestSnapshot() }
+                            actionButton(icon: "arrow.triangle.2.circlepath",
+                                         label: "重启 Claude CLI",
+                                         tint: .orange) {
+                                let n = store.restartClaudeCLI()
+                                refreshClaudes()
+                                flash(n > 0 ? "已终止 \(n) 个 claude 进程" : "没有运行中的 claude")
+                            }
                             actionButton(icon: "xmark.octagon",
                                          label: "清空所有规则",
                                          tint: .red) { store.clearAllRules() }
@@ -80,8 +118,8 @@ struct DashboardView: View {
                     Card { currentRulesDetail }
                 }
             }
-            .padding(.horizontal, 48)
-            .padding(.vertical, 32)
+            .padding(.horizontal, 68)
+            .padding(.vertical, 36)
         }
     }
 
@@ -280,6 +318,40 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    private var restartBanner: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                .font(.title)
+                .foregroundColor(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("配置已更新，Claude CLI 需要重启才会生效").font(.body.bold())
+                Text("检测到 \(runningClaudes.count) 个运行中的 `claude` 进程 (PID: \(runningClaudes.map { String($0.pid) }.joined(separator: ", ")))")
+                    .font(.caption).foregroundColor(.secondary)
+            }
+            Spacer()
+            Button {
+                let n = store.restartClaudeCLI()
+                refreshClaudes()
+                flash(n > 0 ? "已终止 \(n) 个 claude 进程，下次启动将读新配置"
+                            : "没有检测到 claude 进程")
+            } label: {
+                Label("立即终止并让其重读配置", systemImage: "bolt.circle.fill")
+                    .fontWeight(.semibold)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.orange.opacity(0.14))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.orange.opacity(0.45), lineWidth: 1)
+        )
     }
 
     private func toastView(_ msg: String) -> some View {
